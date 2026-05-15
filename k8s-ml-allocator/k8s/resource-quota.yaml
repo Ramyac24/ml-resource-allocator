@@ -1,0 +1,35 @@
+# Namespace-level resource caps — prevents runaway workloads
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ml-quota
+  namespace: ml-workloads
+spec:
+  hard:
+    requests.cpu:    "4"
+    requests.memory: "6Gi"
+    limits.cpu:      "8"
+    limits.memory:   "8Gi"
+    pods:            "20"
+    count/jobs.batch: "10"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: ml-limits
+  namespace: ml-workloads
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu:    "500m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu:    "100m"
+      memory: "128Mi"
+    max:
+      cpu:    "2"
+      memory: "2Gi"
+    min:
+      cpu:    "50m"
+      memory: "64Mi"

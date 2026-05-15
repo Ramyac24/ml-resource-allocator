@@ -1,0 +1,39 @@
+# RBAC for the allocator controller (runs outside cluster / locally)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-allocator-sa
+  namespace: ml-workloads
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ml-allocator-role
+  namespace: ml-workloads
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "services"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ml-allocator-binding
+  namespace: ml-workloads
+subjects:
+- kind: ServiceAccount
+  name: ml-allocator-sa
+  namespace: ml-workloads
+roleRef:
+  kind: Role
+  name: ml-allocator-role
+  apiGroup: rbac.authorization.k8s.io

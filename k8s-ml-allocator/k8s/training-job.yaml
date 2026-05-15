@@ -1,0 +1,38 @@
+# Sample ML Training Job manifest
+# Submit with: kubectl apply -f k8s/training-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: iris-training-job
+  namespace: ml-workloads
+  labels:
+    app:     iris-training-job
+    ml-type: training
+    priority: high
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app:     iris-training-job
+        ml-type: training
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: iris-training-job
+        image: ml-workload:latest
+        imagePullPolicy: IfNotPresent
+        args: ["ml_workloads/sample_training.py"]
+        env:
+        - name: MODEL_NAME
+          value: "iris-rf"
+        - name: N_ESTIMATORS
+          value: "100"
+        resources:
+          requests:
+            cpu:    "200m"
+            memory: "256Mi"
+          limits:
+            cpu:    "500m"
+            memory: "512Mi"

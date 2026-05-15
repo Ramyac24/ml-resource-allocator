@@ -1,0 +1,56 @@
+# Sample Inference Deployment + ClusterIP Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iris-inference
+  namespace: ml-workloads
+  labels:
+    app:     iris-inference
+    ml-type: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iris-inference
+  template:
+    metadata:
+      labels:
+        app:     iris-inference
+        ml-type: inference
+    spec:
+      containers:
+      - name: iris-inference
+        image: ml-workload:latest
+        imagePullPolicy: IfNotPresent
+        args: ["ml_workloads/sample_inference.py"]
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MODEL_PATH
+          value: "/tmp/iris_model.pkl"
+        resources:
+          requests:
+            cpu:    "100m"
+            memory: "128Mi"
+          limits:
+            cpu:    "300m"
+            memory: "256Mi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iris-inference-svc
+  namespace: ml-workloads
+spec:
+  selector:
+    app: iris-inference
+  ports:
+  - port: 80
+    targetPort: 5000
+  type: ClusterIP
