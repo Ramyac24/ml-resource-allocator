@@ -335,41 +335,32 @@ class MLAllocatorController:
 # ── CLI entrypoint ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import typer
+    import argparse
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
     )
 
-    app = typer.Typer()
+    parser = argparse.ArgumentParser(description="ML Resource Allocator Controller")
+    parser.add_argument("--namespace", default=NAMESPACE,
+                        help=f"K8s namespace to watch (default: {NAMESPACE})")
+    parser.add_argument("--once", action="store_true",
+                        help="Run a single tick and exit")
+    args = parser.parse_args()
 
-    @app.command()
-    def run(
-        namespace: str = typer.Option(NAMESPACE, help="K8s namespace"),
-        once:      bool = typer.Option(False,    help="Run one tick and exit"),
-    ):
-        ctrl = MLAllocatorController(namespace=namespace)
+    ctrl = MLAllocatorController(namespace=args.namespace)
 
-        # Seed with sample jobs for demo
-        from allocator.priority_queue import MLJob, Priority
-        ctrl.submit(MLJob.create(
-            name="iris-training",
-            job_type="training",
-            image="ml-workload:latest",
-            priority=Priority.HIGH,
-            cpu_request_m=200, mem_request_mi=256,
-            cpu_limit_m=500,   mem_limit_mi=512,
-        ))
-        ctrl.submit(MLJob.create(
-            name="iris-inference",
-            job_type="inference",
-            image="ml-workload:latest",
-            priority=Priority.MEDIUM,
-            cpu_request_m=100, mem_request_mi=128,
-            cpu_limit_m=250,   mem_limit_mi=256,
-        ))
+    ctrl.submit(MLJob.create(
+        name="iris-training", job_type="training", image="ml-workload:latest",
+        priority=Priority.HIGH, cpu_request_m=200, mem_request_mi=256,
+        cpu_limit_m=500, mem_limit_mi=512,
+    ))
+    ctrl.submit(MLJob.create(
+        name="iris-inference", job_type="inference", image="ml-workload:latest",
+        priority=Priority.MEDIUM, cpu_request_m=100, mem_request_mi=128,
+        cpu_limit_m=250, mem_limit_mi=256,
+    ))
 
-        ctrl.start(once=once)
+    ctrl.start(once=args.once)
 
-    app()
